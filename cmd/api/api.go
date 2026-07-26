@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -26,5 +27,10 @@ func (s *APIServer) Run() {
 
 	// all handling
 
-	http.ListenAndServe(s.addr, router)
+	log.Printf("\n🚀 Server starting on http://localhost:%s", s.addr)
+
+	err := http.ListenAndServe(s.addr, router)
+	if err != nil {
+		log.Fatalf("Server failed: %v", err)
+	}
 }

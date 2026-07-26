@@ -12,7 +12,7 @@ import (
 
 func main() {
 
-	fmt.Printf("%s", config.Envs.DatabaseUrl)
+	fmt.Printf("%s \n", config.Envs.DatabaseUrl)
 
 	conn := db.NewPostgresStorage(config.Envs.DatabaseUrl)
 	ctx := context.Background()
@@ -23,6 +23,6 @@ func main() {
 		log.Fatal("Something went wrong when pining the db", err)
 	}
 
-	server := api.NewApiServer(":8080", conn)
+	server := api.NewApiServer(fmt.Sprintf(":%s", config.Envs.Port), conn)
 	server.Run()
 }

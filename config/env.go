@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	DatabaseUrl string
+	Port        string
 }
 
 var Envs = initConfig()
@@ -21,6 +22,7 @@ func initConfig() Config {
 
 	return Config{
 		DatabaseUrl: getEnv("DATABASE_URL", "postgresql://test"),
+		Port:        getEnv("PORT", "8080"),
 	}
 }
 

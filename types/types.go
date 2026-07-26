@@ -70,7 +70,9 @@ type Label struct {
 }
 
 // many to many
+
+// we might not even need json format eg
 type TaskLabel struct {
-	TaskId  string `json:"task_id" `
-	LabelId string `json:"label_id" `
+	TaskId  string `json:"task_id"`
+	LabelId string `json:"label_id"`
 }

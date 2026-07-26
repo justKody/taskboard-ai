@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/justKody/taskboard-go-api/cmd/api"
 	"github.com/justKody/taskboard-go-api/config"
@@ -12,8 +11,6 @@ import (
 )
 
 func main() {
-
-	fmt.Printf("%s \n", config.Envs.DatabaseUrl)
 
 	conn := db.NewPostgresStorage(config.Envs.DatabaseUrl)
 	ctx := context.Background()

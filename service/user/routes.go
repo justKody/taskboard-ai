@@ -1,22 +1,20 @@
 package user
 
 import (
-	"database/sql"
-
 	"github.com/gorilla/mux"
 )
 
 type Handler struct {
-	db *sql.DB
+	store UserStore
 }
 
-func NewHandler(db *sql.DB) *Handler {
+func NewHandler(store UserStore) *Handler {
 	return &Handler{
-		db: db,
+		store: store,
 	}
 }
 
 func (h *Handler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/login", h.HandleLogin)
-	router.HandleFunc("/signup", h.HandleSignup)
+	router.HandleFunc("/login", h.HandleLogin).Methods("POST")
+	router.HandleFunc("/signup", h.HandleSignup).Methods("POST")
 }

@@ -1,12 +1,14 @@
 package api
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5"
 	"github.com/justKody/taskboard-go-api/middleware"
+	user "github.com/justKody/taskboard-go-api/service/user"
 )
 
 type APIServer struct {
@@ -25,11 +27,14 @@ func (s *APIServer) Run() {
 	router := mux.NewRouter()
 
 	router.Use(middleware.Logger)
-	_ := router.PathPrefix("/api/v1").Subrouter()
+	subRouter := router.PathPrefix("/api/v1").Subrouter()
 
+	userStore := user.NewStore(s.db)
+	userHandler := user.NewHandler(userStore)
+	userHandler.RegisterRoutes(subRouter)
 	// all handling
 
-	log.Printf("\n🚀 Server starting on http://localhost:%s", s.addr)
+	fmt.Printf("\n\n🚀 Server starting on http://localhost:%s\n\n\n", s.addr)
 
 	err := http.ListenAndServe(s.addr, router)
 	if err != nil {

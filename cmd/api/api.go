@@ -1,18 +1,18 @@
 package api
 
 import (
-	"database/sql"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx/v5"
 )
 
 type APIServer struct {
 	addr string
-	db   *sql.DB
+	db   *pgx.Conn
 }
 
-func NewApiServer(addr string, db *sql.DB) *APIServer {
+func NewApiServer(addr string, db *pgx.Conn) *APIServer {
 	return &APIServer{
 		addr: addr,
 		db:   db,
@@ -22,7 +22,7 @@ func NewApiServer(addr string, db *sql.DB) *APIServer {
 func (s *APIServer) Run() {
 	router := mux.NewRouter()
 
-	subRouter := router.PathPrefix("/api/v1").Subrouter()
+	// subRouter := router.PathPrefix("/api/v1").Subrouter()
 
 	// all handling
 

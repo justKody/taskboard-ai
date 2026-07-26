@@ -1,0 +1,28 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/justKody/taskboard-go-api/cmd/api"
+	"github.com/justKody/taskboard-go-api/config"
+	"github.com/justKody/taskboard-go-api/db"
+)
+
+func main() {
+
+	fmt.Printf("%s", config.Envs.DatabaseUrl)
+
+	conn := db.NewPostgresStorage(config.Envs.DatabaseUrl)
+	ctx := context.Background()
+
+	defer conn.Close(ctx)
+
+	if err := conn.Ping(ctx); err != nil {
+		log.Fatal("Something went wrong when pining the db", err)
+	}
+
+	server := api.NewApiServer(":8080", conn)
+	server.Run()
+}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5"
+	"github.com/justKody/taskboard-go-api/middleware"
 )
 
 type APIServer struct {
@@ -23,7 +24,8 @@ func NewApiServer(addr string, db *pgx.Conn) *APIServer {
 func (s *APIServer) Run() {
 	router := mux.NewRouter()
 
-	// subRouter := router.PathPrefix("/api/v1").Subrouter()
+	router.Use(middleware.Logger)
+	_ := router.PathPrefix("/api/v1").Subrouter()
 
 	// all handling
 

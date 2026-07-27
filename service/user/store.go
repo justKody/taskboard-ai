@@ -19,7 +19,7 @@ func NewStore(db *pgx.Conn) *Store {
 	}
 }
 
-func (s *Store) GetUserByID(id string) (*types.User, error) {
+func (s *Store) GetUserByEmail(email string) (*types.User, error) {
 	// query := "SELECT id, name, email, password FROM users WHERE id = $1"
 	// row := s.db.QueryRow(context.Background(), query, id)
 	// var user types.User

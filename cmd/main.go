@@ -12,7 +12,10 @@ import (
 
 func main() {
 
-	conn := db.NewPostgresStorage(config.Envs.DatabaseUrl)
+	conn, err := db.NewPostgresStorage(config.Envs.DatabaseUrl)
+	if err != nil {
+		log.Fatal("Error in DB")
+	}
 	ctx := context.Background()
 
 	defer conn.Close(ctx)

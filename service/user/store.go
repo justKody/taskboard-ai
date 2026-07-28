@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-
 	"github.com/jackc/pgx/v5"
 	"github.com/justKody/taskboard-go-api/db/sqlc"
 	"github.com/justKody/taskboard-go-api/types"

@@ -32,7 +32,7 @@ func (c *Handler) HandleSignup(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if existedUser.Id != "" {
+	if existedUser != nil {
 		utils.WriteError(w, http.StatusBadRequest, errors.New("user already exists"))
 		return
 	}
@@ -46,13 +46,13 @@ func (c *Handler) HandleSignup(w http.ResponseWriter, req *http.Request) {
 
 	// create the user in database
 
-	params := &sqlc.CreateUserParams{
+	params := sqlc.CreateUserParams{
 		Name:     payload.Name,
 		Email:    payload.Email,
 		Password: hashedPassword,
 	}
 
-	user, err := c.store.CreateUser(*params)
+	user, err := c.store.CreateUser(params)
 
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)

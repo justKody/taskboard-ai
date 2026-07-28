@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/justKody/taskboard-go-api/db/sqlc"
@@ -26,6 +27,9 @@ func NewStore(db *pgx.Conn) *Store {
 func (s *Store) GetUserByEmail(email string) (*types.User, error) {
 	user, err := s.queries.GetUserByEmail(context.Background(), email)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
 

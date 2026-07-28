@@ -1,29 +1,38 @@
 package user
 
 import (
+	"context"
+
 	"github.com/jackc/pgx/v5"
+	"github.com/justKody/taskboard-go-api/db/sqlc"
 	"github.com/justKody/taskboard-go-api/types"
 )
 
 type Store struct {
-	db *pgx.Conn
+	queries *sqlc.Queries
 }
 
 type UserStore interface {
-	GetUserByID(id string) (*types.User, error)
+	GetUserByEmail(email string) (*types.User, error)
 }
 
 func NewStore(db *pgx.Conn) *Store {
 	return &Store{
-		db: db,
+		queries: sqlc.New(db),
 	}
 }
 
 func (s *Store) GetUserByEmail(email string) (*types.User, error) {
-	// query := "SELECT id, name, email, password FROM users WHERE id = $1"
-	// row := s.db.QueryRow(context.Background(), query, id)
-	// var user types.User
-	// err := row.Scan(&user.ID, &user.Name, &user.Email, &user.Password)
-	// return &user, err
-	return nil, nil
+	user, err := s.queries.GetUserByEmail(context.Background(), email)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.User{
+		Id:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		Password:  user.Password,
+		CreatedAt: user.CreatedAt,
+	}, nil
 }

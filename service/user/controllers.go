@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/justKody/taskboard-go-api/db/sqlc"
+	"github.com/justKody/taskboard-go-api/middleware"
 	"github.com/justKody/taskboard-go-api/service/auth"
 	"github.com/justKody/taskboard-go-api/utils"
 )
@@ -108,4 +109,137 @@ func (c *Handler) HandleSignup(w http.ResponseWriter, req *http.Request) {
 	}
 	utils.WriteJSON(w, http.StatusCreated, user)
 
+}
+
+func (c *Handler) HandleGetMe(w http.ResponseWriter, req *http.Request) {
+
+	userID, ok := middleware.GetUserID(req.Context())
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
+	user, err := c.store.GetUserById(userID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if user == nil {
+		utils.WriteError(w, http.StatusNotFound, errors.New("user not found"))
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, user)
+}
+
+func (c *Handler) HandleUpdateUser(w http.ResponseWriter, req *http.Request) {
+	userID, ok := middleware.GetUserID(req.Context())
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
+	user, err := c.store.GetUserById(userID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+	}
+	if user == nil {
+		utils.WriteError(w, http.StatusNotFound, errors.New("user not found"))
+		return
+	}
+
+	var payload UpdateUserRequestDTO
+	if err := utils.ParseJSON(req, &payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+	if err := utils.Validate.Struct(payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// update the user in database
+	params := sqlc.UpdateUserParams{
+		ID:   userID,
+		Name: payload.Name,
+	}
+
+	updatedUser, err := c.store.UpdateUser(params)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, updatedUser)
+}
+
+func (c *Handler) HandleChangePassword(w http.ResponseWriter, req *http.Request) {
+	userID, ok := middleware.GetUserID(req.Context())
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
+	user, err := c.store.GetUserById(userID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+	}
+	if user == nil {
+		utils.WriteError(w, http.StatusNotFound, errors.New("user not found"))
+		return
+	}
+
+	var payload ChangePasswordRequestDTO
+	if err := utils.ParseJSON(req, &payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+	if err := utils.Validate.Struct(payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// hash the new password
+	hashedNewPassword, err := auth.HashPassword(payload.NewPassword)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	// update the user in database
+	params := sqlc.ChangePasswordParams{
+		ID:       userID,
+		Password: hashedNewPassword,
+	}
+
+	updatedUser, err := c.store.ChangePassword(params)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, updatedUser)
+}
+
+func (c *Handler) HandleDeleteUser(w http.ResponseWriter, req *http.Request) {
+	userID, ok := middleware.GetUserID(req.Context())
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
+	err := c.store.DeleteUser(userID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, map[string]string{
+		"message": "user deleted successfully",
+	})
+}
+
+func (c *Handler) HandleGetUsersList(w http.ResponseWriter, req *http.Request) {
+	users, err := c.store.GetUsersList()
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, users)
 }

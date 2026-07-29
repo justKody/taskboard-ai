@@ -14,7 +14,7 @@ const UserIDKey contextKey = "userID"
 
 func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		tokenString, err := auth.GetTokenFromHeader(r)
+		tokenString, err := auth.GetToken(r)
 		if err != nil {
 			utils.WriteError(w, http.StatusUnauthorized, err)
 			return

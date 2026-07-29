@@ -10,6 +10,8 @@ import (
 	"github.com/justKody/taskboard-go-api/config"
 )
 
+const TokenCookieName = "token"
+
 type Claims struct {
 	UserId string `json:"id"`
 	jwt.RegisteredClaims
@@ -49,6 +51,41 @@ func VerifyJWT(tokenString string) (string, error) {
 	return claims.UserId, nil
 }
 
+func SetTokenCookie(w http.ResponseWriter, token string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     TokenCookieName,
+		Value:    token,
+		Path:     "/",
+		MaxAge:   config.Envs.JWTExpiration * 60,
+		HttpOnly: true,
+		Secure:   false, // set true in production over HTTPS
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+func ClearTokenCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     TokenCookieName,
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+func GetTokenFromCookie(r *http.Request) (string, error) {
+	cookie, err := r.Cookie(TokenCookieName)
+	if err != nil {
+		return "", errors.New("auth cookie is required")
+	}
+	if cookie.Value == "" {
+		return "", errors.New("auth cookie is empty")
+	}
+	return cookie.Value, nil
+}
+
 func GetTokenFromHeader(r *http.Request) (string, error) {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
@@ -61,4 +98,11 @@ func GetTokenFromHeader(r *http.Request) (string, error) {
 	}
 
 	return parts[1], nil
+}
+
+func GetToken(r *http.Request) (string, error) {
+	if token, err := GetTokenFromCookie(r); err == nil {
+		return token, nil
+	}
+	return GetTokenFromHeader(r)
 }

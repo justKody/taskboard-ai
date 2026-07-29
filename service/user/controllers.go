@@ -48,11 +48,17 @@ func (c *Handler) HandleLogin(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusAccepted, map[string]string{
-		"token": token,
+	auth.SetTokenCookie(w, token)
+	utils.WriteJSON(w, http.StatusOK, map[string]string{
+		"message": "logged in successfully",
 	})
-	return
+}
 
+func (c *Handler) HandleLogout(w http.ResponseWriter, req *http.Request) {
+	auth.ClearTokenCookie(w)
+	utils.WriteJSON(w, http.StatusOK, map[string]string{
+		"message": "logged out successfully",
+	})
 }
 
 func (c *Handler) HandleSignup(w http.ResponseWriter, req *http.Request) {

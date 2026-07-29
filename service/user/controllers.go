@@ -4,12 +4,54 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/justKody/taskboard-go-api/db/sqlc"
 	"github.com/justKody/taskboard-go-api/service/auth"
 	"github.com/justKody/taskboard-go-api/utils"
 )
 
 func (c *Handler) HandleLogin(w http.ResponseWriter, req *http.Request) {
+	var payload LoginRequestDTO
+	if err := utils.ParseJSON(req, &payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := utils.Validate.Struct(payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+	exisitingUser, err := c.store.GetUserByEmail(payload.Email)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			utils.WriteError(w, http.StatusBadRequest, errors.New("Invalid email or password"))
+		} else {
+			utils.WriteError(w, http.StatusInternalServerError, errors.New("Something went wrong"))
+		}
+		return
+	}
+
+	// compare the password
+	isPasswordCorrect := auth.ComparePassword(exisitingUser.Password, payload.Password)
+
+	if !isPasswordCorrect {
+		utils.WriteError(w, http.StatusBadRequest, errors.New("Invalid email or password"))
+		return
+	}
+
+	// create token and send to them
+	token, err := auth.CreateJWT(exisitingUser.Id)
+
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, errors.New("Something went wrong while generating token"))
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusAccepted, map[string]string{
+		"token": token,
+	})
+	return
 
 }
 

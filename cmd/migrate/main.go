@@ -43,12 +43,12 @@ func argsCommands(m *migrate.Migrate) {
 
 	switch os.Args[1] {
 	case "up":
-		if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		if err := m.Steps(1); err != nil && err != migrate.ErrNoChange {
 			log.Fatal(err)
 		}
 
 	case "down":
-		if err := m.Down(); err != nil && err != migrate.ErrNoChange {
+		if err := m.Steps(-1); err != nil && err != migrate.ErrNoChange {
 			log.Fatal(err)
 		}
 

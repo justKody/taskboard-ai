@@ -5,8 +5,69 @@
 package sqlc
 
 import (
+	"database/sql/driver"
+	"fmt"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type MembershipsRole string
+
+const (
+	MembershipsRoleAdmin   MembershipsRole = "admin"
+	MembershipsRoleManager MembershipsRole = "manager"
+	MembershipsRoleMember  MembershipsRole = "member"
+)
+
+func (e *MembershipsRole) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = MembershipsRole(s)
+	case string:
+		*e = MembershipsRole(s)
+	default:
+		return fmt.Errorf("unsupported scan type for MembershipsRole: %T", src)
+	}
+	return nil
+}
+
+type NullMembershipsRole struct {
+	MembershipsRole MembershipsRole `json:"memberships_role"`
+	Valid           bool            `json:"valid"` // Valid is true if MembershipsRole is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullMembershipsRole) Scan(value interface{}) error {
+	if value == nil {
+		ns.MembershipsRole, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.MembershipsRole.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullMembershipsRole) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.MembershipsRole), nil
+}
+
+type Membership struct {
+	OrganizationID string           `json:"organization_id"`
+	UserID         string           `json:"user_id"`
+	Role           MembershipsRole  `json:"role"`
+	JoinedAt       pgtype.Timestamp `json:"joined_at"`
+}
+
+type Organization struct {
+	ID        string           `json:"id"`
+	Name      string           `json:"name"`
+	OwnerID   string           `json:"owner_id"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
+}
 
 type User struct {
 	ID        string    `json:"id"`

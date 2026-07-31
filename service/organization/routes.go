@@ -8,10 +8,13 @@ import (
 )
 
 type Handler struct {
+	store *Store
 }
 
-func (h *Handler) NewHandler() *Handler {
-	return &Handler{}
+func (h *Handler) NewHandler(store *Store) *Handler {
+	return &Handler{
+		store: store,
+	}
 }
 
 func (h *Handler) RegisterRoutes(router *mux.Router) {
@@ -21,5 +24,6 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 	organizationRouter.Use(middleware.Auth)
 
 	// create organization
-	organizationRouter.HandleFunc("/create", h.CreateOrganization).Methods(http.MethodPost)
+	organizationRouter.HandleFunc("/create", h.HandleCreateOrganization).Methods(http.MethodPost)
+	organizationRouter.HandleFunc("/get/{id}", h.HandleGetOrganizationById).Methods(http.MethodGet)
 }

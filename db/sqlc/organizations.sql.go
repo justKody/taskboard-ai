@@ -31,3 +31,20 @@ func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganization
 	)
 	return i, err
 }
+
+const getOrganizationById = `-- name: GetOrganizationById :one
+SELECT id, name, owner_id, created_at
+FROM organizations WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetOrganizationById(ctx context.Context, id string) (Organization, error) {
+	row := q.db.QueryRow(ctx, getOrganizationById, id)
+	var i Organization
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.OwnerID,
+		&i.CreatedAt,
+	)
+	return i, err
+}

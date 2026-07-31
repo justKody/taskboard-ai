@@ -9,6 +9,34 @@ import (
 	"context"
 )
 
+const changeOwnerOfOrganizationById = `-- name: ChangeOwnerOfOrganizationById :exec
+UPDATE organizations
+SET owner_id = $1
+WHERE id = $2
+`
+
+type ChangeOwnerOfOrganizationByIdParams struct {
+	OwnerID string `json:"owner_id"`
+	ID      string `json:"id"`
+}
+
+func (q *Queries) ChangeOwnerOfOrganizationById(ctx context.Context, arg ChangeOwnerOfOrganizationByIdParams) error {
+	_, err := q.db.Exec(ctx, changeOwnerOfOrganizationById, arg.OwnerID, arg.ID)
+	return err
+}
+
+const checkIfUserIsOwner = `-- name: CheckIfUserIsOwner :one
+SELECT owner_id FROM organizations
+WHERE id = $1
+`
+
+func (q *Queries) CheckIfUserIsOwner(ctx context.Context, id string) (string, error) {
+	row := q.db.QueryRow(ctx, checkIfUserIsOwner, id)
+	var owner_id string
+	err := row.Scan(&owner_id)
+	return owner_id, err
+}
+
 const createOrganization = `-- name: CreateOrganization :one
 INSERT INTO organizations (name, owner_id)
 VALUES ($1, $2)
@@ -32,9 +60,19 @@ func (q *Queries) CreateOrganization(ctx context.Context, arg CreateOrganization
 	return i, err
 }
 
+const deleteOrganizationById = `-- name: DeleteOrganizationById :exec
+DELETE FROM organizations
+WHERE id = $1
+`
+
+func (q *Queries) DeleteOrganizationById(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteOrganizationById, id)
+	return err
+}
+
 const getOrganizationById = `-- name: GetOrganizationById :one
-SELECT id, name, owner_id, created_at
-FROM organizations WHERE id = $1 LIMIT 1
+SELECT id, name, owner_id, created_at FROM organizations
+WHERE id = $1
 `
 
 func (q *Queries) GetOrganizationById(ctx context.Context, id string) (Organization, error) {
@@ -47,4 +85,36 @@ func (q *Queries) GetOrganizationById(ctx context.Context, id string) (Organizat
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const getOrganizationsListByUserId = `-- name: GetOrganizationsListByUserId :many
+SELECT o.id, o.name, o.owner_id, o.created_at
+FROM organizations o
+INNER JOIN memberships m ON m.organization_id = o.id
+WHERE m.user_id = $1
+`
+
+func (q *Queries) GetOrganizationsListByUserId(ctx context.Context, userID string) ([]Organization, error) {
+	rows, err := q.db.Query(ctx, getOrganizationsListByUserId, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Organization{}
+	for rows.Next() {
+		var i Organization
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.OwnerID,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

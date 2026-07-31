@@ -8,6 +8,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5"
 	"github.com/justKody/taskboard-go-api/middleware"
+	"github.com/justKody/taskboard-go-api/service/membership"
+	"github.com/justKody/taskboard-go-api/service/organization"
 	user "github.com/justKody/taskboard-go-api/service/user"
 )
 
@@ -32,6 +34,11 @@ func (s *APIServer) Run() {
 	userStore := user.NewStore(s.db)
 	userHandler := user.NewHandler(userStore)
 	userHandler.RegisterRoutes(subRouter)
+
+	organizationStore := organization.NewStore(s.db)
+	membershipStore := membership.NewStore(s.db)
+	organizationHandler := organization.NewHandler(organizationStore, membershipStore)
+	organizationHandler.RegisterRoutes(subRouter)
 	// all handling
 
 	fmt.Printf("\n\n🚀 Server starting on http://localhost:%s\n\n\n", s.addr)

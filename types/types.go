@@ -22,10 +22,10 @@ type Organization struct {
 // many to many
 
 type Membership struct {
-	OrganizationID string // fk key
-	UserID         string // fk key
-	role           string // admin/memeber
-	JoinedAt       string // timestamp
+	OrganizationId string `json:"organization_id"`
+	UserId         string `json:"user_id"`
+	Role           string `json:"role"`
+	JoinedAt       string `json:"joined_at"`
 }
 
 // one to many

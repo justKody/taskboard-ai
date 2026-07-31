@@ -5,15 +5,18 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/justKody/taskboard-go-api/middleware"
+	"github.com/justKody/taskboard-go-api/service/membership"
 )
 
 type Handler struct {
-	store *Store
+	store           OrganizationStore
+	membershipStore membership.MemebershipStore
 }
 
-func (h *Handler) NewHandler(store *Store) *Handler {
+func NewHandler(store OrganizationStore, membershipStore membership.MemebershipStore) *Handler {
 	return &Handler{
-		store: store,
+		store:           store,
+		membershipStore: membershipStore,
 	}
 }
 
@@ -25,5 +28,6 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 
 	// create organization
 	organizationRouter.HandleFunc("/create", h.HandleCreateOrganization).Methods(http.MethodPost)
-	organizationRouter.HandleFunc("/get/{id}", h.HandleGetOrganizationById).Methods(http.MethodGet)
+	organizationRouter.HandleFunc("/get/{id}", h.HandleGetOrganizationDetailsById).Methods(http.MethodGet)
+	organizationRouter.HandleFunc("/list", h.HandleGetOrganizationsListByUserId).Methods(http.MethodGet)
 }

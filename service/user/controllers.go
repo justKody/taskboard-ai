@@ -181,6 +181,7 @@ func (c *Handler) HandleChangePassword(w http.ResponseWriter, req *http.Request)
 	user, err := c.store.GetUserById(userID)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
 	}
 	if user == nil {
 		utils.WriteError(w, http.StatusNotFound, errors.New("user not found"))
@@ -197,14 +198,17 @@ func (c *Handler) HandleChangePassword(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	// hash the new password
+	if !auth.ComparePassword(user.Password, payload.OldPassword) {
+		utils.WriteError(w, http.StatusBadRequest, errors.New("incorrect old password"))
+		return
+	}
+
 	hashedNewPassword, err := auth.HashPassword(payload.NewPassword)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	// update the user in database
 	params := sqlc.ChangePasswordParams{
 		ID:       userID,
 		Password: hashedNewPassword,

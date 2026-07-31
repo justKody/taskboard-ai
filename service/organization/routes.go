@@ -26,8 +26,9 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 	// we will have middleware here to check if the user is authenticated
 	organizationRouter.Use(middleware.Auth)
 
-	// create organization
 	organizationRouter.HandleFunc("/create", h.HandleCreateOrganization).Methods(http.MethodPost)
 	organizationRouter.HandleFunc("/get/{id}", h.HandleGetOrganizationDetailsById).Methods(http.MethodGet)
 	organizationRouter.HandleFunc("/list", h.HandleGetOrganizationsListByUserId).Methods(http.MethodGet)
+	organizationRouter.HandleFunc("/change-owner/{id}", h.HandleChangeOwnerOfOrganizationById).Methods(http.MethodPut)
+	organizationRouter.HandleFunc("/delete/{id}", h.HandleDeleteOrganizationById).Methods(http.MethodDelete)
 }

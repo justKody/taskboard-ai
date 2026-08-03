@@ -1,0 +1,32 @@
+---
+description: Document every new API route in docs/api with a curl example
+globs: /service/**/routes.go,server/docs/api/**/*
+alwaysApply: false
+---
+
+# API route documentation
+
+Every new route must be recorded in `server/docs/api/`.
+
+When you add or change a route in `RegisterRoutes`:
+
+1. Add or update a markdown file under `server/docs/api/` (group by domain, e.g. `organization.md`).
+2. Include method, path, auth requirement, and a working `curl` with a dummy raw JSON body when the endpoint accepts a body.
+
+````markdown
+## POST /api/v1/organization/create
+
+Auth: required (JWT)
+
+```bash
+curl -X POST http://localhost:8080/api/v1/organization/create \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{"name":"Acme Corp"}'
+```
+````
+
+```
+
+No route ships without its docs entry.
+```

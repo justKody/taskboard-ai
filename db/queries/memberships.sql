@@ -11,3 +11,7 @@ WHERE organization_id = $1;
 UPDATE memberships
 SET role = $3
 WHERE user_id = $1 AND organization_id = $2;
+
+-- name: GetMembershipByUserAndOrganization :one
+SELECT user_id, organization_id, role, joined_at FROM memberships
+WHERE user_id = $1 AND organization_id = $2;

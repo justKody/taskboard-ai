@@ -37,7 +37,7 @@ func (s *APIServer) Run() {
 
 	organizationStore := organization.NewStore(s.db)
 	membershipStore := membership.NewStore(s.db)
-	organizationHandler := organization.NewHandler(organizationStore, membershipStore)
+	organizationHandler := organization.NewHandler(organizationStore, membershipStore, userStore)
 	organizationHandler.RegisterRoutes(subRouter)
 	// all handling
 

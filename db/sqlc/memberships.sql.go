@@ -79,6 +79,35 @@ func (q *Queries) GetAllMembershipsByOrganizationId(ctx context.Context, organiz
 	return items, nil
 }
 
+const getMembershipByUserAndOrganization = `-- name: GetMembershipByUserAndOrganization :one
+SELECT user_id, organization_id, role, joined_at FROM memberships
+WHERE user_id = $1 AND organization_id = $2
+`
+
+type GetMembershipByUserAndOrganizationParams struct {
+	UserID         string `json:"user_id"`
+	OrganizationID string `json:"organization_id"`
+}
+
+type GetMembershipByUserAndOrganizationRow struct {
+	UserID         string           `json:"user_id"`
+	OrganizationID string           `json:"organization_id"`
+	Role           MembershipsRole  `json:"role"`
+	JoinedAt       pgtype.Timestamp `json:"joined_at"`
+}
+
+func (q *Queries) GetMembershipByUserAndOrganization(ctx context.Context, arg GetMembershipByUserAndOrganizationParams) (GetMembershipByUserAndOrganizationRow, error) {
+	row := q.db.QueryRow(ctx, getMembershipByUserAndOrganization, arg.UserID, arg.OrganizationID)
+	var i GetMembershipByUserAndOrganizationRow
+	err := row.Scan(
+		&i.UserID,
+		&i.OrganizationID,
+		&i.Role,
+		&i.JoinedAt,
+	)
+	return i, err
+}
+
 const updateMembershipRole = `-- name: UpdateMembershipRole :exec
 UPDATE memberships
 SET role = $3

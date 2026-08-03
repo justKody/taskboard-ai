@@ -10,6 +10,11 @@ type ChangeOwnerOfOrganizationRequestDTO struct {
 	NewOwnerID string `json:"new_owner_id" validate:"required"`
 }
 
+type InviteUserToOrganizationRequestDTO struct {
+	OrganizationID string `json:"organization_id" validate:"required"`
+	UserID         string `json:"user_id" validate:"required"`
+}
+
 type OrganizationDetailsResponseDTO struct {
 	Organization *types.Organization `json:"organization"`
 	Members      []types.Membership  `json:"members"`

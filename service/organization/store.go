@@ -20,6 +20,8 @@ type OrganizationStore interface {
 	CheckIfUserIsOwner(ctx context.Context, userId, id string) (bool, error)
 	ChangeOwnerOfOrganizationById(ctx context.Context, userId, id string) error
 	GetOrganizationsListByUserId(ctx context.Context, userId string) ([]types.Organization, error)
+	CreateOrganizationInvite(ctx context.Context, params sqlc.CreateOrganizationInviteParams) (*types.OrganizationInvite, error)
+	GetPendingOrganizationInvite(ctx context.Context, organizationId, userId string) (*types.OrganizationInvite, error)
 }
 
 func NewStore(db *pgx.Conn) *Store {
@@ -100,4 +102,40 @@ func (s *Store) GetOrganizationsListByUserId(ctx context.Context, userId string)
 		}
 	}
 	return result, nil
+}
+
+func (s *Store) CreateOrganizationInvite(ctx context.Context, params sqlc.CreateOrganizationInviteParams) (*types.OrganizationInvite, error) {
+	invite, err := s.queries.CreateOrganizationInvite(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	return &types.OrganizationInvite{
+		Id:             invite.ID,
+		OrganizationId: invite.OrganizationID,
+		UserId:         invite.UserID,
+		InvitedBy:      invite.InvitedBy,
+		Status:         string(invite.Status),
+		CreatedAt:      invite.CreatedAt.Time,
+	}, nil
+}
+
+func (s *Store) GetPendingOrganizationInvite(ctx context.Context, organizationId, userId string) (*types.OrganizationInvite, error) {
+	invite, err := s.queries.GetPendingOrganizationInvite(ctx, sqlc.GetPendingOrganizationInviteParams{
+		OrganizationID: organizationId,
+		UserID:         userId,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &types.OrganizationInvite{
+		Id:             invite.ID,
+		OrganizationId: invite.OrganizationID,
+		UserId:         invite.UserID,
+		InvitedBy:      invite.InvitedBy,
+		Status:         string(invite.Status),
+		CreatedAt:      invite.CreatedAt.Time,
+	}, nil
 }

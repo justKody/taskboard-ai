@@ -56,6 +56,49 @@ func (ns NullMembershipsRole) Value() (driver.Value, error) {
 	return string(ns.MembershipsRole), nil
 }
 
+type OrganizationInviteStatus string
+
+const (
+	OrganizationInviteStatusPending  OrganizationInviteStatus = "pending"
+	OrganizationInviteStatusAccepted OrganizationInviteStatus = "accepted"
+	OrganizationInviteStatusRejected OrganizationInviteStatus = "rejected"
+)
+
+func (e *OrganizationInviteStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = OrganizationInviteStatus(s)
+	case string:
+		*e = OrganizationInviteStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for OrganizationInviteStatus: %T", src)
+	}
+	return nil
+}
+
+type NullOrganizationInviteStatus struct {
+	OrganizationInviteStatus OrganizationInviteStatus `json:"organization_invite_status"`
+	Valid                    bool                     `json:"valid"` // Valid is true if OrganizationInviteStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullOrganizationInviteStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.OrganizationInviteStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.OrganizationInviteStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullOrganizationInviteStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.OrganizationInviteStatus), nil
+}
+
 type Membership struct {
 	OrganizationID string           `json:"organization_id"`
 	UserID         string           `json:"user_id"`
@@ -68,6 +111,15 @@ type Organization struct {
 	Name      string           `json:"name"`
 	OwnerID   string           `json:"owner_id"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
+}
+
+type OrganizationInvite struct {
+	ID             string                   `json:"id"`
+	OrganizationID string                   `json:"organization_id"`
+	UserID         string                   `json:"user_id"`
+	InvitedBy      string                   `json:"invited_by"`
+	Status         OrganizationInviteStatus `json:"status"`
+	CreatedAt      pgtype.Timestamp         `json:"created_at"`
 }
 
 type User struct {

@@ -2,6 +2,7 @@ package membership
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -16,6 +17,7 @@ type Store struct {
 type MemebershipStore interface {
 	CreateMembership(ctx context.Context, params sqlc.CreateMembershipParams) (*types.Membership, error)
 	GetAllMembershipsByOrganizationId(ctx context.Context, orgId string) ([]types.Membership, error)
+	GetMembershipByUserAndOrganization(ctx context.Context, userId, orgId string) (*types.Membership, error)
 	UpdateMembershipRole(ctx context.Context, userId, orgId string, role sqlc.MembershipsRole) error
 }
 
@@ -72,4 +74,24 @@ func (s *Store) UpdateMembershipRole(ctx context.Context, userId, orgId string, 
 		OrganizationID: orgId,
 		Role:           role,
 	})
+}
+
+func (s *Store) GetMembershipByUserAndOrganization(ctx context.Context, userId, orgId string) (*types.Membership, error) {
+	membership, err := s.query.GetMembershipByUserAndOrganization(ctx, sqlc.GetMembershipByUserAndOrganizationParams{
+		UserID:         userId,
+		OrganizationID: orgId,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &types.Membership{
+		UserId:         membership.UserID,
+		OrganizationId: membership.OrganizationID,
+		Role:           string(membership.Role),
+		JoinedAt:       membership.JoinedAt.Time.Format(time.RFC3339),
+	}, nil
 }

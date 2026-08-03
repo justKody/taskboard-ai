@@ -194,3 +194,95 @@ func (c *Handler) HandleGetOrganizationsListByUserId(w http.ResponseWriter, r *h
 	}
 	utils.WriteJSON(w, http.StatusOK, organizations)
 }
+
+func (c *Handler) HandleInviteUserToOrganization(w http.ResponseWriter, r *http.Request) {
+	var payload InviteUserToOrganizationRequestDTO
+	if err := utils.ParseJSON(r, &payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+	if err := utils.Validate.Struct(payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	// get the inviter's user id
+	invitedBy, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("Not authenticated"))
+		return
+	}
+
+	if invitedBy == payload.UserID {
+		utils.WriteError(w, http.StatusBadRequest, errors.New("cannot invite yourself"))
+		return
+	}
+
+	// check if the organization exists
+	organization, err := c.store.GetOrganizationById(r.Context(), payload.OrganizationID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if organization == nil {
+		utils.WriteError(w, http.StatusNotFound, errors.New("organization not found"))
+		return
+	}
+
+	// check if the inviter is a super_admin or admin
+	inviterMembership, err := c.membershipStore.GetMembershipByUserAndOrganization(r.Context(), invitedBy, payload.OrganizationID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if inviterMembership == nil ||
+		(inviterMembership.Role != string(sqlc.MembershipsRoleSuperAdmin) &&
+			inviterMembership.Role != string(sqlc.MembershipsRoleAdmin)) {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("Not authorized to invite users to this organization"))
+		return
+	}
+
+	// check if the invitee exists
+	invitee, err := c.userStore.GetUserById(r.Context(), payload.UserID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if invitee == nil {
+		utils.WriteError(w, http.StatusNotFound, errors.New("user not found"))
+		return
+	}
+
+	// check if the invitee is already a member of the organization
+	existingMembership, err := c.membershipStore.GetMembershipByUserAndOrganization(r.Context(), payload.UserID, payload.OrganizationID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if existingMembership != nil {
+		utils.WriteError(w, http.StatusBadRequest, errors.New("user is already a member of this organization"))
+		return
+	}
+	// check if the invitee has a pending invite
+	pendingInvite, err := c.store.GetPendingOrganizationInvite(r.Context(), payload.OrganizationID, payload.UserID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if pendingInvite != nil {
+		utils.WriteError(w, http.StatusBadRequest, errors.New("user already has a pending invite"))
+		return
+	}
+
+	invite, err := c.store.CreateOrganizationInvite(r.Context(), sqlc.CreateOrganizationInviteParams{
+		OrganizationID: payload.OrganizationID,
+		UserID:         payload.UserID,
+		InvitedBy:      invitedBy,
+	})
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusCreated, invite)
+}

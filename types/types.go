@@ -28,6 +28,16 @@ type Membership struct {
 	JoinedAt       string `json:"joined_at"`
 }
 
+// org → user invite (pending until accepted)
+type OrganizationInvite struct {
+	Id             string    `json:"id"`
+	OrganizationId string    `json:"organization_id" validate:"required"`
+	UserId         string    `json:"user_id" validate:"required"` // invitee
+	InvitedBy      string    `json:"invited_by" validate:"required"`
+	Status         string    `json:"status"` // pending/accepted/rejected
+	CreatedAt      time.Time `json:"created_at"`
+}
+
 // one to many
 
 type Project struct {

@@ -94,16 +94,16 @@ On accept: create a row in `memberships` and mark the request as `accepted`.
 
 On reject: mark the request as `rejected` (no membership created).
 
-| Column          | Type                          |
-| --------------- | ----------------------------- |
-| id              | UUID / INT                    |
-| organization_id | FK → organizations.id         |
-| user_id         | FK → users.id                 |
-| status          | pending/accepted/rejected     |
-| message         | TEXT (optional join note)     |
-| reviewed_by     | FK → users.id (nullable)      |
-| reviewed_at     | TIMESTAMP (nullable)          |
-| created_at      | TIMESTAMP                     |
+| Column          | Type                      |
+| --------------- | ------------------------- |
+| id              | UUID / INT                |
+| organization_id | FK → organizations.id     |
+| user_id         | FK → users.id             |
+| status          | pending/accepted/rejected |
+| message         | TEXT (optional join note) |
+| reviewed_by     | FK → users.id (nullable)  |
+| reviewed_at     | TIMESTAMP (nullable)      |
+| created_at      | TIMESTAMP                 |
 
 Constraints
 
@@ -493,6 +493,8 @@ deleted_at TIMESTAMP NULL
 ```
 
 Filter deleted records automatically.
+
+- Implement soft delete on **organizations** and **users** (`deleted_at` column). Hard deletes are not allowed for these entities — set `deleted_at` instead, and exclude soft-deleted rows from all list/get queries by default.
 
 ---
 

@@ -34,12 +34,14 @@ func (c *Handler) HandleCreateOrganization(w http.ResponseWriter, r *http.Reques
 		OwnerID: userId,
 	}
 
+	// create the organization
 	organization, err := c.store.CreateOrganization(params)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 
+	// create the membership for the owner
 	var createMembershipParams = sqlc.CreateMembershipParams{
 		UserID:         userId,
 		OrganizationID: organization.Id,

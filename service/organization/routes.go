@@ -36,4 +36,5 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 	organizationRouter.HandleFunc("/delete/{id}", h.HandleDeleteOrganizationById).Methods(http.MethodDelete)
 	// user invites
 	organizationRouter.HandleFunc("/invite", h.HandleInviteUserToOrganization).Methods(http.MethodPost)
+	organizationRouter.HandleFunc("/invite/{id}", h.HandleAcceptOrRejectOrganizationInvite).Methods(http.MethodPut)
 }

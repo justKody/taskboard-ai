@@ -22,6 +22,8 @@ type OrganizationStore interface {
 	GetOrganizationsListByUserId(ctx context.Context, userId string) ([]types.Organization, error)
 	CreateOrganizationInvite(ctx context.Context, params sqlc.CreateOrganizationInviteParams) (*types.OrganizationInvite, error)
 	GetPendingOrganizationInvite(ctx context.Context, organizationId, userId string) (*types.OrganizationInvite, error)
+	GetOrganizationInviteById(ctx context.Context, id string) (*types.OrganizationInvite, error)
+	UpdateOrganizationInviteStatus(ctx context.Context, id string, status sqlc.OrganizationInviteStatus) (*types.OrganizationInvite, error)
 }
 
 func NewStore(db *pgx.Conn) *Store {
@@ -109,14 +111,7 @@ func (s *Store) CreateOrganizationInvite(ctx context.Context, params sqlc.Create
 	if err != nil {
 		return nil, err
 	}
-	return &types.OrganizationInvite{
-		Id:             invite.ID,
-		OrganizationId: invite.OrganizationID,
-		UserId:         invite.UserID,
-		InvitedBy:      invite.InvitedBy,
-		Status:         string(invite.Status),
-		CreatedAt:      invite.CreatedAt.Time,
-	}, nil
+	return toOrganizationInvite(invite), nil
 }
 
 func (s *Store) GetPendingOrganizationInvite(ctx context.Context, organizationId, userId string) (*types.OrganizationInvite, error) {
@@ -130,6 +125,35 @@ func (s *Store) GetPendingOrganizationInvite(ctx context.Context, organizationId
 		}
 		return nil, err
 	}
+	return toOrganizationInvite(invite), nil
+}
+
+func (s *Store) GetOrganizationInviteById(ctx context.Context, id string) (*types.OrganizationInvite, error) {
+	invite, err := s.queries.GetOrganizationInviteById(ctx, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return toOrganizationInvite(invite), nil
+}
+
+func (s *Store) UpdateOrganizationInviteStatus(ctx context.Context, id string, status sqlc.OrganizationInviteStatus) (*types.OrganizationInvite, error) {
+	invite, err := s.queries.UpdateOrganizationInviteStatus(ctx, sqlc.UpdateOrganizationInviteStatusParams{
+		ID:     id,
+		Status: status,
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return toOrganizationInvite(invite), nil
+}
+
+func toOrganizationInvite(invite sqlc.OrganizationInvite) *types.OrganizationInvite {
 	return &types.OrganizationInvite{
 		Id:             invite.ID,
 		OrganizationId: invite.OrganizationID,
@@ -137,5 +161,5 @@ func (s *Store) GetPendingOrganizationInvite(ctx context.Context, organizationId
 		InvitedBy:      invite.InvitedBy,
 		Status:         string(invite.Status),
 		CreatedAt:      invite.CreatedAt.Time,
-	}, nil
+	}
 }

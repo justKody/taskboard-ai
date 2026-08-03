@@ -15,6 +15,10 @@ type InviteUserToOrganizationRequestDTO struct {
 	UserID         string `json:"user_id" validate:"required"`
 }
 
+type AcceptOrRejectOrganizationInviteRequestDTO struct {
+	Status string `json:"status" validate:"required,oneof=accepted rejected"`
+}
+
 type OrganizationDetailsResponseDTO struct {
 	Organization *types.Organization `json:"organization"`
 	Members      []types.Membership  `json:"members"`

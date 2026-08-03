@@ -10,7 +10,9 @@ organization
 ├── GET    Get Organization Details
 ├── GET    List My Organizations
 ├── PUT    Change Owner
-└── DEL    Delete Organization
+├── DEL    Delete Organization
+├── POST   Invite User
+└── PUT    Accept or Reject Invite
 ```
 
 ---
@@ -82,4 +84,40 @@ Auth: required (JWT) — caller must be the owner; org must have no members
 ```bash
 curl -X DELETE http://localhost:8080/api/v1/organization/delete/11111111-1111-1111-1111-111111111111 \
   -H "Authorization: Bearer <token>"
+```
+
+---
+
+## Invite User
+
+### POST /api/v1/organization/invite
+
+Auth: required (JWT) — caller must be `super_admin` or `admin` of the organization
+
+Creates a pending invite. Fails if the invitee is already a member or already has a pending invite.
+
+```bash
+curl -X POST http://localhost:8080/api/v1/organization/invite \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{"organization_id":"11111111-1111-1111-1111-111111111111","user_id":"22222222-2222-2222-2222-222222222222"}'
+```
+
+---
+
+## Accept or Reject Invite
+
+### PUT /api/v1/organization/invite/{id}
+
+Auth: required (JWT) — caller must be the invitee
+
+Body: `{"status":"accepted"}` or `{"status":"rejected"}`.
+
+Invite must be pending. On accept, creates a `member` membership (fails if already a member).
+
+```bash
+curl -X PUT http://localhost:8080/api/v1/organization/invite/33333333-3333-3333-3333-333333333333 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{"status":"accepted"}'
 ```

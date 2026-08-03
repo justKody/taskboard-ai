@@ -286,3 +286,85 @@ func (c *Handler) HandleInviteUserToOrganization(w http.ResponseWriter, r *http.
 
 	utils.WriteJSON(w, http.StatusCreated, invite)
 }
+
+func (c *Handler) HandleAcceptOrRejectOrganizationInvite(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	inviteId := vars["id"]
+
+	var payload AcceptOrRejectOrganizationInviteRequestDTO
+	if err := utils.ParseJSON(r, &payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+	if err := utils.Validate.Struct(payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	userId, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("Not authenticated"))
+		return
+	}
+
+	invite, err := c.store.GetOrganizationInviteById(r.Context(), inviteId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if invite == nil {
+		utils.WriteError(w, http.StatusNotFound, errors.New("invite not found"))
+		return
+	}
+
+	if invite.UserId != userId {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("Not authorized to respond to this invite"))
+		return
+	}
+
+	if invite.Status != string(sqlc.OrganizationInviteStatusPending) {
+		utils.WriteError(w, http.StatusBadRequest, errors.New("invite is no longer pending"))
+		return
+	}
+
+	status := sqlc.OrganizationInviteStatus(payload.Status)
+
+	switch status {
+	case sqlc.OrganizationInviteStatusAccepted:
+		existingMembership, err := c.membershipStore.GetMembershipByUserAndOrganization(r.Context(), userId, invite.OrganizationId)
+		if err != nil {
+			utils.WriteError(w, http.StatusInternalServerError, err)
+			return
+		}
+		if existingMembership != nil {
+			utils.WriteError(w, http.StatusBadRequest, errors.New("user is already a member of this organization"))
+			return
+		}
+
+		_, err = c.membershipStore.CreateMembership(r.Context(), sqlc.CreateMembershipParams{
+			UserID:         userId,
+			OrganizationID: invite.OrganizationId,
+			Role:           sqlc.MembershipsRoleMember,
+		})
+		if err != nil {
+			utils.WriteError(w, http.StatusInternalServerError, err)
+			return
+		}
+	case sqlc.OrganizationInviteStatusRejected:
+	default:
+		utils.WriteError(w, http.StatusBadRequest, errors.New("invalid invite status"))
+		return
+	}
+
+	updatedInvite, err := c.store.UpdateOrganizationInviteStatus(r.Context(), inviteId, status)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if updatedInvite == nil {
+		utils.WriteError(w, http.StatusBadRequest, errors.New("invite is no longer pending"))
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, updatedInvite)
+}

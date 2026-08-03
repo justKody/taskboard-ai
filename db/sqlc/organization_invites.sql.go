@@ -35,6 +35,26 @@ func (q *Queries) CreateOrganizationInvite(ctx context.Context, arg CreateOrgani
 	return i, err
 }
 
+const getOrganizationInviteById = `-- name: GetOrganizationInviteById :one
+SELECT id, organization_id, user_id, invited_by, status, created_at
+FROM organization_invites
+WHERE id = $1
+`
+
+func (q *Queries) GetOrganizationInviteById(ctx context.Context, id string) (OrganizationInvite, error) {
+	row := q.db.QueryRow(ctx, getOrganizationInviteById, id)
+	var i OrganizationInvite
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.UserID,
+		&i.InvitedBy,
+		&i.Status,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getPendingOrganizationInvite = `-- name: GetPendingOrganizationInvite :one
 SELECT id, organization_id, user_id, invited_by, status, created_at
 FROM organization_invites
@@ -48,6 +68,32 @@ type GetPendingOrganizationInviteParams struct {
 
 func (q *Queries) GetPendingOrganizationInvite(ctx context.Context, arg GetPendingOrganizationInviteParams) (OrganizationInvite, error) {
 	row := q.db.QueryRow(ctx, getPendingOrganizationInvite, arg.OrganizationID, arg.UserID)
+	var i OrganizationInvite
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.UserID,
+		&i.InvitedBy,
+		&i.Status,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const updateOrganizationInviteStatus = `-- name: UpdateOrganizationInviteStatus :one
+UPDATE organization_invites
+SET status = $2
+WHERE id = $1 AND status = 'pending'
+RETURNING id, organization_id, user_id, invited_by, status, created_at
+`
+
+type UpdateOrganizationInviteStatusParams struct {
+	ID     string                   `json:"id"`
+	Status OrganizationInviteStatus `json:"status"`
+}
+
+func (q *Queries) UpdateOrganizationInviteStatus(ctx context.Context, arg UpdateOrganizationInviteStatusParams) (OrganizationInvite, error) {
+	row := q.db.QueryRow(ctx, updateOrganizationInviteStatus, arg.ID, arg.Status)
 	var i OrganizationInvite
 	err := row.Scan(
 		&i.ID,

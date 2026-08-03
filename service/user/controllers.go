@@ -22,7 +22,7 @@ func (c *Handler) HandleLogin(w http.ResponseWriter, req *http.Request) {
 		utils.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
-	exisitingUser, err := c.store.GetUserByEmail(payload.Email)
+	exisitingUser, err := c.store.GetUserByEmail(req.Context(), payload.Email)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -74,7 +74,7 @@ func (c *Handler) HandleSignup(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	existedUser, err := c.store.GetUserByEmail(payload.Email)
+	existedUser, err := c.store.GetUserByEmail(req.Context(), payload.Email)
 
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
@@ -101,7 +101,7 @@ func (c *Handler) HandleSignup(w http.ResponseWriter, req *http.Request) {
 		Password: hashedPassword,
 	}
 
-	user, err := c.store.CreateUser(params)
+	user, err := c.store.CreateUser(req.Context(), params)
 
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
@@ -119,7 +119,7 @@ func (c *Handler) HandleGetMe(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	user, err := c.store.GetUserById(userID)
+	user, err := c.store.GetUserById(req.Context(), userID)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
@@ -138,7 +138,7 @@ func (c *Handler) HandleUpdateUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	user, err := c.store.GetUserById(userID)
+	user, err := c.store.GetUserById(req.Context(), userID)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 	}
@@ -163,7 +163,7 @@ func (c *Handler) HandleUpdateUser(w http.ResponseWriter, req *http.Request) {
 		Name: payload.Name,
 	}
 
-	updatedUser, err := c.store.UpdateUser(params)
+	updatedUser, err := c.store.UpdateUser(req.Context(), params)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
@@ -178,7 +178,7 @@ func (c *Handler) HandleChangePassword(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	user, err := c.store.GetUserById(userID)
+	user, err := c.store.GetUserById(req.Context(), userID)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
@@ -214,7 +214,7 @@ func (c *Handler) HandleChangePassword(w http.ResponseWriter, req *http.Request)
 		Password: hashedNewPassword,
 	}
 
-	updatedUser, err := c.store.ChangePassword(params)
+	updatedUser, err := c.store.ChangePassword(req.Context(), params)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
@@ -229,7 +229,7 @@ func (c *Handler) HandleDeleteUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err := c.store.DeleteUser(userID)
+	err := c.store.DeleteUser(req.Context(), userID)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
@@ -240,7 +240,7 @@ func (c *Handler) HandleDeleteUser(w http.ResponseWriter, req *http.Request) {
 }
 
 func (c *Handler) HandleGetUsersList(w http.ResponseWriter, req *http.Request) {
-	users, err := c.store.GetUsersList()
+	users, err := c.store.GetUsersList(req.Context())
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return

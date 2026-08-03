@@ -14,12 +14,12 @@ type Store struct {
 }
 
 type OrganizationStore interface {
-	CreateOrganization(sqlc.CreateOrganizationParams) (*types.Organization, error)
-	GetOrganizationById(id string) (*types.Organization, error)
-	DeleteOrganizationById(id string) error
-	CheckIfUserIsOwner(userId, id string) (bool, error)
-	ChangeOwnerOfOrganizationById(userId, id string) error
-	GetOrganizationsListByUserId(userId string) ([]types.Organization, error)
+	CreateOrganization(ctx context.Context, params sqlc.CreateOrganizationParams) (*types.Organization, error)
+	GetOrganizationById(ctx context.Context, id string) (*types.Organization, error)
+	DeleteOrganizationById(ctx context.Context, id string) error
+	CheckIfUserIsOwner(ctx context.Context, userId, id string) (bool, error)
+	ChangeOwnerOfOrganizationById(ctx context.Context, userId, id string) error
+	GetOrganizationsListByUserId(ctx context.Context, userId string) ([]types.Organization, error)
 }
 
 func NewStore(db *pgx.Conn) *Store {
@@ -28,8 +28,8 @@ func NewStore(db *pgx.Conn) *Store {
 	}
 }
 
-func (s *Store) CreateOrganization(params sqlc.CreateOrganizationParams) (*types.Organization, error) {
-	organization, err := s.queries.CreateOrganization(context.Background(), params)
+func (s *Store) CreateOrganization(ctx context.Context, params sqlc.CreateOrganizationParams) (*types.Organization, error) {
+	organization, err := s.queries.CreateOrganization(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -41,8 +41,8 @@ func (s *Store) CreateOrganization(params sqlc.CreateOrganizationParams) (*types
 	}, nil
 }
 
-func (s *Store) GetOrganizationById(id string) (*types.Organization, error) {
-	organization, err := s.queries.GetOrganizationById(context.Background(), id)
+func (s *Store) GetOrganizationById(ctx context.Context, id string) (*types.Organization, error) {
+	organization, err := s.queries.GetOrganizationById(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -57,24 +57,24 @@ func (s *Store) GetOrganizationById(id string) (*types.Organization, error) {
 	}, nil
 }
 
-func (s *Store) CheckIfUserIsOwner(userId string, id string) (bool, error) {
-	ownerId, err := s.queries.CheckIfUserIsOwner(context.Background(), id)
+func (s *Store) CheckIfUserIsOwner(ctx context.Context, userId string, id string) (bool, error) {
+	ownerId, err := s.queries.CheckIfUserIsOwner(ctx, id)
 	if err != nil {
 		return false, err
 	}
 	return ownerId == userId, nil
 }
 
-func (s *Store) DeleteOrganizationById(id string) error {
-	err := s.queries.DeleteOrganizationById(context.Background(), id)
+func (s *Store) DeleteOrganizationById(ctx context.Context, id string) error {
+	err := s.queries.DeleteOrganizationById(ctx, id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Store) ChangeOwnerOfOrganizationById(userId, id string) error {
-	err := s.queries.ChangeOwnerOfOrganizationById(context.Background(), sqlc.ChangeOwnerOfOrganizationByIdParams{
+func (s *Store) ChangeOwnerOfOrganizationById(ctx context.Context, userId, id string) error {
+	err := s.queries.ChangeOwnerOfOrganizationById(ctx, sqlc.ChangeOwnerOfOrganizationByIdParams{
 		OwnerID: userId,
 		ID:      id,
 	})
@@ -84,8 +84,8 @@ func (s *Store) ChangeOwnerOfOrganizationById(userId, id string) error {
 	return nil
 }
 
-func (s *Store) GetOrganizationsListByUserId(userId string) ([]types.Organization, error) {
-	organizations, err := s.queries.GetOrganizationsListByUserId(context.Background(), userId)
+func (s *Store) GetOrganizationsListByUserId(ctx context.Context, userId string) ([]types.Organization, error) {
+	organizations, err := s.queries.GetOrganizationsListByUserId(ctx, userId)
 	if err != nil {
 		return nil, err
 	}

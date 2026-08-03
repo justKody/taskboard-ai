@@ -35,7 +35,7 @@ func (c *Handler) HandleCreateOrganization(w http.ResponseWriter, r *http.Reques
 	}
 
 	// create the organization
-	organization, err := c.store.CreateOrganization(params)
+	organization, err := c.store.CreateOrganization(r.Context(), params)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
@@ -61,16 +61,19 @@ func (c *Handler) HandleGetOrganizationDetailsById(w http.ResponseWriter, r *htt
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	organization, err := c.store.GetOrganizationById(id)
+	// get the organization details
+	organization, err := c.store.GetOrganizationById(r.Context(), id)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
+
 	if organization == nil {
 		utils.WriteError(w, http.StatusNotFound, errors.New("organization not found"))
 		return
 	}
 
+	// get the memberships for the organization
 	members, err := c.membershipStore.GetAllMembershipsByOrganizationId(r.Context(), id)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
@@ -103,7 +106,7 @@ func (c *Handler) HandleChangeOwnerOfOrganizationById(w http.ResponseWriter, r *
 
 	// check if the user is the owner of the organization
 
-	isOwner, err := c.store.CheckIfUserIsOwner(userId, id)
+	isOwner, err := c.store.CheckIfUserIsOwner(r.Context(), userId, id)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
@@ -114,7 +117,7 @@ func (c *Handler) HandleChangeOwnerOfOrganizationById(w http.ResponseWriter, r *
 	}
 
 	// change the owner of the organization
-	err = c.store.ChangeOwnerOfOrganizationById(payload.NewOwnerID, id)
+	err = c.store.ChangeOwnerOfOrganizationById(r.Context(), payload.NewOwnerID, id)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
@@ -137,7 +140,7 @@ func (c *Handler) HandleDeleteOrganizationById(w http.ResponseWriter, r *http.Re
 
 	userId, _ := middleware.GetUserID(r.Context())
 
-	owner, err := c.store.CheckIfUserIsOwner(userId, id)
+	owner, err := c.store.CheckIfUserIsOwner(r.Context(), userId, id)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
@@ -168,7 +171,7 @@ func (c *Handler) HandleDeleteOrganizationById(w http.ResponseWriter, r *http.Re
 	}
 
 	// delete the organization
-	err = c.store.DeleteOrganizationById(id)
+	err = c.store.DeleteOrganizationById(r.Context(), id)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
@@ -184,7 +187,7 @@ func (c *Handler) HandleGetOrganizationsListByUserId(w http.ResponseWriter, r *h
 		return
 	}
 
-	organizations, err := c.store.GetOrganizationsListByUserId(userId)
+	organizations, err := c.store.GetOrganizationsListByUserId(r.Context(), userId)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return

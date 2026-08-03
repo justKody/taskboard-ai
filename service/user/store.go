@@ -14,13 +14,13 @@ type Store struct {
 }
 
 type UserStore interface {
-	GetUserByEmail(email string) (*types.User, error)
-	CreateUser(params sqlc.CreateUserParams) (*types.User, error)
-	GetUserById(id string) (*types.User, error)
-	UpdateUser(params sqlc.UpdateUserParams) (*types.User, error)
-	ChangePassword(params sqlc.ChangePasswordParams) (*types.User, error)
-	DeleteUser(id string) error
-	GetUsersList() ([]types.User, error)
+	GetUserByEmail(ctx context.Context, email string) (*types.User, error)
+	CreateUser(ctx context.Context, params sqlc.CreateUserParams) (*types.User, error)
+	GetUserById(ctx context.Context, id string) (*types.User, error)
+	UpdateUser(ctx context.Context, params sqlc.UpdateUserParams) (*types.User, error)
+	ChangePassword(ctx context.Context, params sqlc.ChangePasswordParams) (*types.User, error)
+	DeleteUser(ctx context.Context, id string) error
+	GetUsersList(ctx context.Context) ([]types.User, error)
 }
 
 func NewStore(db *pgx.Conn) *Store {
@@ -29,8 +29,8 @@ func NewStore(db *pgx.Conn) *Store {
 	}
 }
 
-func (s *Store) GetUserByEmail(email string) (*types.User, error) {
-	user, err := s.queries.GetUserByEmail(context.Background(), email)
+func (s *Store) GetUserByEmail(ctx context.Context, email string) (*types.User, error) {
+	user, err := s.queries.GetUserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -47,8 +47,8 @@ func (s *Store) GetUserByEmail(email string) (*types.User, error) {
 	}, nil
 }
 
-func (s *Store) CreateUser(params sqlc.CreateUserParams) (*types.User, error) {
-	user, err := s.queries.CreateUser(context.Background(), params)
+func (s *Store) CreateUser(ctx context.Context, params sqlc.CreateUserParams) (*types.User, error) {
+	user, err := s.queries.CreateUser(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +62,8 @@ func (s *Store) CreateUser(params sqlc.CreateUserParams) (*types.User, error) {
 	}, nil
 }
 
-func (s *Store) GetUserById(id string) (*types.User, error) {
-	user, err := s.queries.GetUserById(context.Background(), id)
+func (s *Store) GetUserById(ctx context.Context, id string) (*types.User, error) {
+	user, err := s.queries.GetUserById(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
@@ -79,8 +79,8 @@ func (s *Store) GetUserById(id string) (*types.User, error) {
 	}, nil
 }
 
-func (s *Store) UpdateUser(params sqlc.UpdateUserParams) (*types.User, error) {
-	user, err := s.queries.UpdateUser(context.Background(), params)
+func (s *Store) UpdateUser(ctx context.Context, params sqlc.UpdateUserParams) (*types.User, error) {
+	user, err := s.queries.UpdateUser(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -93,8 +93,8 @@ func (s *Store) UpdateUser(params sqlc.UpdateUserParams) (*types.User, error) {
 	}, nil
 }
 
-func (s *Store) ChangePassword(params sqlc.ChangePasswordParams) (*types.User, error) {
-	user, err := s.queries.ChangePassword(context.Background(), params)
+func (s *Store) ChangePassword(ctx context.Context, params sqlc.ChangePasswordParams) (*types.User, error) {
+	user, err := s.queries.ChangePassword(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -107,8 +107,8 @@ func (s *Store) ChangePassword(params sqlc.ChangePasswordParams) (*types.User, e
 	}, nil
 }
 
-func (s *Store) DeleteUser(id string) error {
-	err := s.queries.DeleteUser(context.Background(), id)
+func (s *Store) DeleteUser(ctx context.Context, id string) error {
+	err := s.queries.DeleteUser(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return errors.New("user not found to delete")
@@ -118,8 +118,8 @@ func (s *Store) DeleteUser(id string) error {
 	return nil
 }
 
-func (s *Store) GetUsersList() ([]types.User, error) {
-	users, err := s.queries.GetUsersList(context.Background())
+func (s *Store) GetUsersList(ctx context.Context) ([]types.User, error) {
+	users, err := s.queries.GetUsersList(ctx)
 	if err != nil {
 		return nil, err
 	}

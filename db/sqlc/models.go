@@ -15,9 +15,10 @@ import (
 type MembershipsRole string
 
 const (
-	MembershipsRoleAdmin   MembershipsRole = "admin"
-	MembershipsRoleManager MembershipsRole = "manager"
-	MembershipsRoleMember  MembershipsRole = "member"
+	MembershipsRoleSuperAdmin MembershipsRole = "super_admin"
+	MembershipsRoleAdmin      MembershipsRole = "admin"
+	MembershipsRoleManager    MembershipsRole = "manager"
+	MembershipsRoleMember     MembershipsRole = "member"
 )
 
 func (e *MembershipsRole) Scan(src interface{}) error {

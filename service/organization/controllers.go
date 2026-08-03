@@ -45,7 +45,7 @@ func (c *Handler) HandleCreateOrganization(w http.ResponseWriter, r *http.Reques
 	var createMembershipParams = sqlc.CreateMembershipParams{
 		UserID:         userId,
 		OrganizationID: organization.Id,
-		Role:           sqlc.MembershipsRoleAdmin,
+		Role:           sqlc.MembershipsRoleSuperAdmin,
 	}
 
 	_, err = c.membershipStore.CreateMembership(r.Context(), createMembershipParams)
@@ -123,8 +123,8 @@ func (c *Handler) HandleChangeOwnerOfOrganizationById(w http.ResponseWriter, r *
 		return
 	}
 
-	// also update the membership of the new owner (owner is tracked on orgs; memberships use admin)
-	err = c.membershipStore.UpdateMembershipRole(r.Context(), payload.NewOwnerID, id, sqlc.MembershipsRoleAdmin)
+	// also update the membership of the new owner (owner is tracked on orgs; memberships use super_admin)
+	err = c.membershipStore.UpdateMembershipRole(r.Context(), payload.NewOwnerID, id, sqlc.MembershipsRoleSuperAdmin)
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return

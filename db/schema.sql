@@ -31,6 +31,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 --
 
 CREATE TYPE public.memberships_role AS ENUM (
+    'super_admin',
     'admin',
     'manager',
     'member'

@@ -7,6 +7,7 @@ CREATE TABLE organizations (
 
 
 CREATE TYPE memberships_role AS ENUM (
+    'super_admin',
     'admin',
     'manager',
     'member'

@@ -1,0 +1,16 @@
+---
+description: Never run database migrate commands; the user runs them
+alwaysApply: true
+---
+
+# No migrate commands
+
+Never run database migration commands. The user owns applying migrations.
+
+Do **not** execute any of:
+
+- `make migrate-up`, `make migrate-down`, `make migrate-force`, or other `make migrate-*` targets
+- `go run cmd/migrate/main.go ...`
+- `migrate up`, `migrate down`, `migrate force`, or any `migrate` CLI invocation
+
+You may still create or edit migration SQL files under `cmd/migrate/migrations/` when asked. Tell the user which migrate command they should run themselves after writing files.

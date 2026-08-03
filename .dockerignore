@@ -1,0 +1,14 @@
+.git
+.cursor
+.env
+.env.*
+!.env.example
+build/
+docs/
+challange.md
+**/.DS_Store
+*.md
+Makefile
+sqlc.yaml
+.dockerignore
+Dockerfile

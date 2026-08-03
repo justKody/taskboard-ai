@@ -14,6 +14,7 @@ type Store struct {
 }
 
 type MemebershipStore interface {
+	CreateMembership(ctx context.Context, params sqlc.CreateMembershipParams) (*types.Membership, error)
 	GetAllMembershipsByOrganizationId(ctx context.Context, orgId string) ([]types.Membership, error)
 	UpdateMembershipRole(ctx context.Context, userId, orgId string, role sqlc.MembershipsRole) error
 }
@@ -22,6 +23,24 @@ func NewStore(db *pgx.Conn) *Store {
 	return &Store{
 		query: sqlc.New(db),
 	}
+}
+
+func (s *Store) CreateMembership(ctx context.Context, params sqlc.CreateMembershipParams) (*types.Membership, error) {
+	membership, err := s.query.CreateMembership(ctx, sqlc.CreateMembershipParams{
+		UserID:         params.UserID,
+		OrganizationID: params.OrganizationID,
+		Role:           params.Role,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.Membership{
+		UserId:         membership.UserID,
+		OrganizationId: membership.OrganizationID,
+		Role:           string(membership.Role),
+		JoinedAt:       membership.JoinedAt.Time.Format(time.RFC3339),
+	}, nil
 }
 
 func (s *Store) GetAllMembershipsByOrganizationId(ctx context.Context, orgId string) ([]types.Membership, error) {

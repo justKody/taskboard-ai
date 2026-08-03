@@ -24,7 +24,7 @@ func (c *Handler) HandleCreateOrganization(w http.ResponseWriter, r *http.Reques
 	}
 
 	userId, ok := middleware.GetUserID(r.Context())
-	if ok {
+	if !ok {
 		utils.WriteError(w, http.StatusUnauthorized, errors.New("Not authenticated"))
 		return
 	}
@@ -40,7 +40,17 @@ func (c *Handler) HandleCreateOrganization(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// also make a membership for the owner
+	var createMembershipParams = sqlc.CreateMembershipParams{
+		UserID:         userId,
+		OrganizationID: organization.Id,
+		Role:           sqlc.MembershipsRoleAdmin,
+	}
+
+	_, err = c.membershipStore.CreateMembership(r.Context(), createMembershipParams)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
 
 	utils.WriteJSON(w, http.StatusCreated, organization)
 }

@@ -11,6 +11,37 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createMembership = `-- name: CreateMembership :one
+INSERT INTO memberships (user_id, organization_id, role)
+VALUES ($1, $2, $3)
+RETURNING user_id, organization_id, role, joined_at
+`
+
+type CreateMembershipParams struct {
+	UserID         string          `json:"user_id"`
+	OrganizationID string          `json:"organization_id"`
+	Role           MembershipsRole `json:"role"`
+}
+
+type CreateMembershipRow struct {
+	UserID         string           `json:"user_id"`
+	OrganizationID string           `json:"organization_id"`
+	Role           MembershipsRole  `json:"role"`
+	JoinedAt       pgtype.Timestamp `json:"joined_at"`
+}
+
+func (q *Queries) CreateMembership(ctx context.Context, arg CreateMembershipParams) (CreateMembershipRow, error) {
+	row := q.db.QueryRow(ctx, createMembership, arg.UserID, arg.OrganizationID, arg.Role)
+	var i CreateMembershipRow
+	err := row.Scan(
+		&i.UserID,
+		&i.OrganizationID,
+		&i.Role,
+		&i.JoinedAt,
+	)
+	return i, err
+}
+
 const getAllMembershipsByOrganizationId = `-- name: GetAllMembershipsByOrganizationId :many
 SELECT user_id, organization_id, role, joined_at FROM memberships
 WHERE organization_id = $1

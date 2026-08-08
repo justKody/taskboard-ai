@@ -45,7 +45,7 @@ type Project struct {
 	OrganizationID string    `json:"organization_id" validate:"required"` // fk key
 	Name           string    `json:"name" validate:"required"`
 	Description    string    `json:"description"`
-	Status         string    `json:"status" validate:"required"` // active/completed
+	Status         string    `json:"status" validate:"required"` // active/completed/archived
 	CreatedBy      string    `json:"created_by"`                 // fk key users // can be evalutaed by token
 	CreatedAt      time.Time `json:"created_at"`
 }
@@ -57,7 +57,7 @@ type Task struct {
 	ProjectID   string    `json:"project_id" validate:"required"` // fk
 	Title       string    `json:"title" validate:"required"`
 	Description string    `json:"description"`
-	Status      string    `json:"status"`   // active/completed
+	Status      string    `json:"status"`   // todo/in_progress/done
 	Priority    string    `json:"priority"` // low/medium/high
 	Due_date    string    `json:"due_date"`
 	AssignedTo  string    `json:"assigned_to"` // fk

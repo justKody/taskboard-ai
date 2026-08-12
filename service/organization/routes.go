@@ -25,7 +25,7 @@ func NewHandler(store OrganizationStore, membershipStore membership.MemebershipS
 
 func (h *Handler) RegisterRoutes(router *mux.Router) {
 	organizationRouter := router.PathPrefix("/organization").Subrouter()
-
+ 
 	// we will have middleware here to check if the user is authenticated
 	organizationRouter.Use(middleware.Auth)
 

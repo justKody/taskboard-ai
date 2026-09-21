@@ -92,6 +92,64 @@ func (h *Handler) handleListProject(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (h *Handler) handleUpdateProject(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	organizationId := vars["id"]
+	projectId := vars["projectId"]
+
+	var payload UpdateProjectRequestDTO
+	if err := utils.ParseJSON(r, &payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := utils.Validate.Struct(payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	userId, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("Not authenticated"))
+		return
+	}
+
+	membership, err := h.membershipStore.GetMembershipByUserAndOrganization(r.Context(), userId, organizationId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if membership == nil {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("Not authorized to update a project in this organization"))
+		return
+	}
+
+	if membership.Role != string(sqlc.MembershipsRoleAdmin) && membership.Role != string(sqlc.MembershipsRoleSuperAdmin) {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("Your role is not authorized to update a project for this organization"))
+		return
+	}
+
+	params := sqlc.UpdateProjectParams{
+		ID:             projectId,
+		OrganizationID: organizationId,
+		Name:           payload.Name,
+		Description:    pgtype.Text{String: payload.Description, Valid: payload.Description != ""},
+		Status:         sqlc.ProjectStatus(payload.Status),
+	}
+
+	project, err := h.store.UpdateProject(r.Context(), params)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if project == nil {
+		utils.WriteError(w, http.StatusNotFound, errors.New("project not found"))
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, project)
+}
+
 func (h *Handler) handleDeleteProject(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	organizationId := vars["id"]

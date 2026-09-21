@@ -94,3 +94,39 @@ func (q *Queries) ListProject(ctx context.Context, organizationID string) ([]Lis
 	}
 	return items, nil
 }
+
+const updateProject = `-- name: UpdateProject :one
+UPDATE projects
+SET name = $3, description = $4, status = $5
+WHERE id = $1 AND organization_id = $2
+RETURNING id, organization_id, name, description, status, created_by, created_at
+`
+
+type UpdateProjectParams struct {
+	ID             string        `json:"id"`
+	OrganizationID string        `json:"organization_id"`
+	Name           string        `json:"name"`
+	Description    pgtype.Text   `json:"description"`
+	Status         ProjectStatus `json:"status"`
+}
+
+func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (Project, error) {
+	row := q.db.QueryRow(ctx, updateProject,
+		arg.ID,
+		arg.OrganizationID,
+		arg.Name,
+		arg.Description,
+		arg.Status,
+	)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.Name,
+		&i.Description,
+		&i.Status,
+		&i.CreatedBy,
+		&i.CreatedAt,
+	)
+	return i, err
+}

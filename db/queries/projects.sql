@@ -7,6 +7,12 @@ RETURNING id, organization_id, name, description, status, created_by, created_at
 SELECT id, name, description, status, created_by, created_at from projects
 where organization_id = $1;
 
+-- name: UpdateProject :one
+UPDATE projects
+SET name = $3, description = $4, status = $5
+WHERE id = $1 AND organization_id = $2
+RETURNING id, organization_id, name, description, status, created_by, created_at;
+
 -- name: DeleteProject :exec
 DELETE from projects
 where id = $1;

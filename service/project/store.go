@@ -15,6 +15,7 @@ type Store struct {
 
 type ProjectStore interface {
 	CreateProject(ctx context.Context, params sqlc.CreateProjectParams) (*types.Project, error)
+	ListProject(ctx context.Context, organizationId string) ([]types.Project, error)
 }
 
 func NewStore(db *pgx.Conn) *Store {
@@ -41,4 +42,28 @@ func (s *Store) CreateProject(ctx context.Context, params sqlc.CreateProjectPara
 		CreatedBy:      project.CreatedBy,
 		CreatedAt:      project.CreatedAt.Time,
 	}, nil
+}
+
+func (s *Store) ListProject(ctx context.Context, organizationId string) ([]types.Project, error) {
+	projects, err := s.queries.ListProject(ctx, organizationId)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	result := make([]types.Project, len(projects))
+	for i, project := range projects {
+		result[i] = types.Project{
+			Id:             project.ID,
+			OrganizationID: organizationId,
+			Name:           project.Name,
+			Description:    project.Description.String,
+			Status:         string(project.Status),
+			CreatedBy:      project.CreatedBy,
+			CreatedAt:      project.CreatedAt.Time,
+		}
+	}
+	return result, nil
 }

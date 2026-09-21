@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/justKody/taskboard-go-api/db/sqlc"
 	"github.com/justKody/taskboard-go-api/middleware"
@@ -39,6 +40,11 @@ func (h *Handler) HandleCreateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// only with role greater than admin can create a project
+	if membership.Role != string(sqlc.MembershipsRoleAdmin) || membership.Role != string(sqlc.MembershipsRoleSuperAdmin) {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("Your role is not authorized to create project for this organization"))
+	}
+
 	params := sqlc.CreateProjectParams{
 		OrganizationID: payload.OrganizationID,
 		Name:           payload.Name,
@@ -53,4 +59,35 @@ func (h *Handler) HandleCreateProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJSON(w, http.StatusCreated, project)
+}
+
+func (h *Handler) handleListProject(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	organizationId := vars["id"]
+
+	userId, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("Not authenticated"))
+		return
+	}
+
+	// only members of the organization can see the projects
+	membership, err := h.membershipStore.GetMembershipByUserAndOrganization(r.Context(), userId, organizationId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if membership == nil {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("Not authorized to create a project in this organization"))
+		return
+	}
+
+	projects, err := h.store.ListProject(r.Context(), organizationId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, projects)
+
 }

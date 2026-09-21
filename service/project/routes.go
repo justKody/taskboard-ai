@@ -26,4 +26,5 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 	projectRouter.Use(middleware.Auth)
 
 	projectRouter.HandleFunc("/create", h.HandleCreateProject).Methods(http.MethodPost)
+	projectRouter.HandleFunc("/list/{id}", h.handleListProject).Methods(http.MethodGet)
 }

@@ -99,6 +99,135 @@ func (ns NullOrganizationInviteStatus) Value() (driver.Value, error) {
 	return string(ns.OrganizationInviteStatus), nil
 }
 
+type Priority string
+
+const (
+	PriorityLow    Priority = "low"
+	PriorityMedium Priority = "medium"
+	PriorityHigh   Priority = "high"
+)
+
+func (e *Priority) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = Priority(s)
+	case string:
+		*e = Priority(s)
+	default:
+		return fmt.Errorf("unsupported scan type for Priority: %T", src)
+	}
+	return nil
+}
+
+type NullPriority struct {
+	Priority Priority `json:"priority"`
+	Valid    bool     `json:"valid"` // Valid is true if Priority is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPriority) Scan(value interface{}) error {
+	if value == nil {
+		ns.Priority, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.Priority.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPriority) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.Priority), nil
+}
+
+type ProjectStatus string
+
+const (
+	ProjectStatusActive    ProjectStatus = "active"
+	ProjectStatusCompleted ProjectStatus = "completed"
+	ProjectStatusArchived  ProjectStatus = "archived"
+)
+
+func (e *ProjectStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ProjectStatus(s)
+	case string:
+		*e = ProjectStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ProjectStatus: %T", src)
+	}
+	return nil
+}
+
+type NullProjectStatus struct {
+	ProjectStatus ProjectStatus `json:"project_status"`
+	Valid         bool          `json:"valid"` // Valid is true if ProjectStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullProjectStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.ProjectStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ProjectStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullProjectStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ProjectStatus), nil
+}
+
+type TaskStatus string
+
+const (
+	TaskStatusTodo       TaskStatus = "todo"
+	TaskStatusInProgress TaskStatus = "in_progress"
+	TaskStatusDone       TaskStatus = "done"
+)
+
+func (e *TaskStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = TaskStatus(s)
+	case string:
+		*e = TaskStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for TaskStatus: %T", src)
+	}
+	return nil
+}
+
+type NullTaskStatus struct {
+	TaskStatus TaskStatus `json:"task_status"`
+	Valid      bool       `json:"valid"` // Valid is true if TaskStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullTaskStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.TaskStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.TaskStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullTaskStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.TaskStatus), nil
+}
+
 type Membership struct {
 	OrganizationID string           `json:"organization_id"`
 	UserID         string           `json:"user_id"`
@@ -120,6 +249,29 @@ type OrganizationInvite struct {
 	InvitedBy      string                   `json:"invited_by"`
 	Status         OrganizationInviteStatus `json:"status"`
 	CreatedAt      pgtype.Timestamp         `json:"created_at"`
+}
+
+type Project struct {
+	ID             string           `json:"id"`
+	OrganizationID string           `json:"organization_id"`
+	Name           string           `json:"name"`
+	Description    pgtype.Text      `json:"description"`
+	Status         ProjectStatus    `json:"status"`
+	CreatedBy      string           `json:"created_by"`
+	CreatedAt      pgtype.Timestamp `json:"created_at"`
+}
+
+type Task struct {
+	ID          string           `json:"id"`
+	ProjectID   string           `json:"project_id"`
+	Title       string           `json:"title"`
+	Description pgtype.Text      `json:"description"`
+	Status      TaskStatus       `json:"status"`
+	Priority    Priority         `json:"priority"`
+	DueDate     pgtype.Date      `json:"due_date"`
+	AssignedTo  pgtype.UUID      `json:"assigned_to"`
+	CreatedBy   string           `json:"created_by"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
 }
 
 type User struct {

@@ -10,6 +10,7 @@ import (
 	"github.com/justKody/taskboard-go-api/middleware"
 	"github.com/justKody/taskboard-go-api/service/membership"
 	"github.com/justKody/taskboard-go-api/service/organization"
+	"github.com/justKody/taskboard-go-api/service/project"
 	user "github.com/justKody/taskboard-go-api/service/user"
 )
 
@@ -39,6 +40,10 @@ func (s *APIServer) Run() {
 	membershipStore := membership.NewStore(s.db)
 	organizationHandler := organization.NewHandler(organizationStore, membershipStore, userStore)
 	organizationHandler.RegisterRoutes(subRouter)
+
+	projectStore := project.NewStore(s.db)
+	projectHandler := project.NewHandler(projectStore, membershipStore)
+	projectHandler.RegisterRoutes(subRouter)
 	// all handling
 
 	fmt.Printf("\n\n🚀 Server starting on http://localhost:%s\n\n\n", s.addr)

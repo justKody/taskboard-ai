@@ -15,6 +15,7 @@ type Store struct {
 
 type ProjectStore interface {
 	CreateProject(ctx context.Context, params sqlc.CreateProjectParams) (*types.Project, error)
+	GetProject(ctx context.Context, id string) (*types.Project, error)
 	ListProject(ctx context.Context, organizationId string) ([]types.Project, error)
 	UpdateProject(ctx context.Context, params sqlc.UpdateProjectParams) (*types.Project, error)
 	DeleteProject(ctx context.Context, id string) error
@@ -28,6 +29,26 @@ func NewStore(db *pgx.Conn) *Store {
 
 func (s *Store) CreateProject(ctx context.Context, params sqlc.CreateProjectParams) (*types.Project, error) {
 	project, err := s.queries.CreateProject(ctx, params)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &types.Project{
+		Id:             project.ID,
+		OrganizationID: project.OrganizationID,
+		Name:           project.Name,
+		Description:    project.Description.String,
+		Status:         string(project.Status),
+		CreatedBy:      project.CreatedBy,
+		CreatedAt:      project.CreatedAt.Time,
+	}, nil
+}
+
+func (s *Store) GetProject(ctx context.Context, id string) (*types.Project, error) {
+	project, err := s.queries.GetProject(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil

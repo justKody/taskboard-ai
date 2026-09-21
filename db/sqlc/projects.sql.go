@@ -43,3 +43,44 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 	)
 	return i, err
 }
+
+const listProject = `-- name: ListProject :many
+SELECT id, name, description, status, created_by, created_at from projects
+where organization_id = $1
+`
+
+type ListProjectRow struct {
+	ID          string           `json:"id"`
+	Name        string           `json:"name"`
+	Description pgtype.Text      `json:"description"`
+	Status      ProjectStatus    `json:"status"`
+	CreatedBy   string           `json:"created_by"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+}
+
+func (q *Queries) ListProject(ctx context.Context, organizationID string) ([]ListProjectRow, error) {
+	rows, err := q.db.Query(ctx, listProject, organizationID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListProjectRow{}
+	for rows.Next() {
+		var i ListProjectRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.Status,
+			&i.CreatedBy,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

@@ -16,6 +16,7 @@ type Store struct {
 type ProjectStore interface {
 	CreateProject(ctx context.Context, params sqlc.CreateProjectParams) (*types.Project, error)
 	ListProject(ctx context.Context, organizationId string) ([]types.Project, error)
+	DeleteProject(ctx context.Context, id string) error
 }
 
 func NewStore(db *pgx.Conn) *Store {
@@ -66,4 +67,8 @@ func (s *Store) ListProject(ctx context.Context, organizationId string) ([]types
 		}
 	}
 	return result, nil
+}
+
+func (s *Store) DeleteProject(ctx context.Context, id string) error {
+	return s.queries.DeleteProject(ctx, id)
 }

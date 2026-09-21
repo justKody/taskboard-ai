@@ -91,3 +91,38 @@ func (h *Handler) handleListProject(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusOK, projects)
 
 }
+
+func (h *Handler) handleDeleteProject(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	organizationId := vars["id"]
+	projectId := vars["projectId"]
+
+	userId, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("Not authenticated"))
+		return
+	}
+
+	membership, err := h.membershipStore.GetMembershipByUserAndOrganization(r.Context(), userId, organizationId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if membership == nil {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("Not authorized to delete a project in this organization"))
+		return
+	}
+
+	if membership.Role != string(sqlc.MembershipsRoleAdmin) && membership.Role != string(sqlc.MembershipsRoleSuperAdmin) {
+		utils.WriteError(w, http.StatusUnauthorized, errors.New("Your role is not authorized to delete a project for this organization"))
+		return
+	}
+
+	err = h.store.DeleteProject(r.Context(), projectId)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, "Project deleted successfully")
+}

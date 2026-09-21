@@ -6,3 +6,7 @@ RETURNING id, organization_id, name, description, status, created_by, created_at
 -- name: ListProject :many
 SELECT id, name, description, status, created_by, created_at from projects
 where organization_id = $1;
+
+-- name: DeleteProject :exec
+DELETE from projects
+where id = $1;

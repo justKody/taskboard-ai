@@ -14,6 +14,7 @@ type Store struct {
 	query *sqlc.Queries
 }
 
+
 type MemebershipStore interface {
 	CreateMembership(ctx context.Context, params sqlc.CreateMembershipParams) (*types.Membership, error)
 	GetAllMembershipsByOrganizationId(ctx context.Context, orgId string) ([]types.Membership, error)

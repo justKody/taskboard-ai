@@ -13,19 +13,28 @@ import (
 
 const createTask = `-- name: CreateTask :one
 INSERT INTO tasks (project_id, title, description, status, priority, due_date, assigned_to, created_by)
-VALUES ($1, $2, $3, COALESCE($4, 'todo'), COALESCE($5, 'low'), $6, $7, $8)
+VALUES (
+  $1,
+  $2,
+  $3,
+  COALESCE($4::task_status, 'todo'),
+  COALESCE($5::priority, 'low'),
+  $6,
+  $7,
+  $8
+)
 RETURNING id, project_id, title, description, status, priority, due_date, assigned_to, created_by, created_at
 `
 
 type CreateTaskParams struct {
-	ProjectID   string      `json:"project_id"`
-	Title       string      `json:"title"`
-	Description pgtype.Text `json:"description"`
-	Column4     interface{} `json:"column_4"`
-	Column5     interface{} `json:"column_5"`
-	DueDate     pgtype.Date `json:"due_date"`
-	AssignedTo  pgtype.UUID `json:"assigned_to"`
-	CreatedBy   string      `json:"created_by"`
+	ProjectID   string         `json:"project_id"`
+	Title       string         `json:"title"`
+	Description pgtype.Text    `json:"description"`
+	Status      NullTaskStatus `json:"status"`
+	Priority    NullPriority   `json:"priority"`
+	DueDate     pgtype.Date    `json:"due_date"`
+	AssignedTo  pgtype.UUID    `json:"assigned_to"`
+	CreatedBy   string         `json:"created_by"`
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error) {
@@ -33,8 +42,8 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		arg.ProjectID,
 		arg.Title,
 		arg.Description,
-		arg.Column4,
-		arg.Column5,
+		arg.Status,
+		arg.Priority,
 		arg.DueDate,
 		arg.AssignedTo,
 		arg.CreatedBy,
@@ -56,7 +65,7 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 }
 
 const deleteTask = `-- name: DeleteTask :exec
-DELETE from projects
+DELETE from tasks
 where id = $1
 `
 

@@ -3,6 +3,10 @@ INSERT INTO projects (organization_id, name, description, created_by)
 VALUES ($1, $2, $3, $4)
 RETURNING id, organization_id, name, description, status, created_by, created_at;
 
+-- name: GetProject :one
+SELECT id, organization_id, name, description, status, created_by, created_at FROM projects
+WHERE id = $1;
+
 -- name: ListProject :many
 SELECT id, name, description, status, created_by, created_at from projects
 where organization_id = $1;

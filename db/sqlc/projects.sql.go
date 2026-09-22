@@ -54,6 +54,26 @@ func (q *Queries) DeleteProject(ctx context.Context, id string) error {
 	return err
 }
 
+const getProject = `-- name: GetProject :one
+SELECT id, organization_id, name, description, status, created_by, created_at FROM projects
+WHERE id = $1
+`
+
+func (q *Queries) GetProject(ctx context.Context, id string) (Project, error) {
+	row := q.db.QueryRow(ctx, getProject, id)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.Name,
+		&i.Description,
+		&i.Status,
+		&i.CreatedBy,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const listProject = `-- name: ListProject :many
 SELECT id, name, description, status, created_by, created_at from projects
 where organization_id = $1

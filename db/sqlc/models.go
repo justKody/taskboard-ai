@@ -228,6 +228,15 @@ func (ns NullTaskStatus) Value() (driver.Value, error) {
 	return string(ns.TaskStatus), nil
 }
 
+type Comment struct {
+	ID              string           `json:"id"`
+	TaskID          string           `json:"task_id"`
+	UserID          string           `json:"user_id"`
+	ParentCommentID pgtype.UUID      `json:"parent_comment_id"`
+	Messages        string           `json:"messages"`
+	CreatedAt       pgtype.Timestamp `json:"created_at"`
+}
+
 type Membership struct {
 	OrganizationID string           `json:"organization_id"`
 	UserID         string           `json:"user_id"`

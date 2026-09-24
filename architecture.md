@@ -50,7 +50,7 @@ external binary run via `make sqlc`.
 ```text
 .
 ├── .gitignore
-├── client/                            # empty placeholder — no frontend yet
+├── client/                            # React + Vite + TS web app (see client/README.md)
 └── server/                            # the Go module lives here
     ├── go.mod / go.sum
     ├── Makefile                       # every project command lives here (build, run, sqlc, migrate*)
@@ -441,7 +441,7 @@ description of what the code already does:
 - **Single connection, not a pool.** `db.NewPostgresStorage` returns `*pgx.Conn` and every store takes `*pgx.Conn`. `pgxpool.Pool` would be the production choice; switching means changing `NewStore` signatures (`sqlc.New` accepts any `DBTX`, so the generated layer needs no change).
 - **No transactions yet.** `sqlc` generated `Queries.WithTx(pgx.Tx)`, but nothing calls it. Multi-step flows (create org + owner membership; accept invite + create membership) currently run as separate statements and can half-apply.
 - **No graceful shutdown, no timeouts.** `http.ListenAndServe` with no `http.Server` struct, so no read/write/idle timeouts and no signal handling.
-- **No CORS middleware** — needed once `client/` is populated.
+- **No CORS middleware.** The web client works around it by being same-origin (Vite dev proxy for `/api`); a separately hosted frontend would need CORS with credentials.
 - **No tests.** No `_test.go` anywhere; the store interfaces exist and make handlers mockable, so table-driven handler tests are the natural first addition.
 - **`GetUsersList` selects the password column** and `types.User` hides it only via `json:"-"`; there's no separate public user projection.
 - **Signup relies on the `(nil, nil)`-on-no-rows convention**; changing that convention breaks `HandleSignup`'s duplicate check.

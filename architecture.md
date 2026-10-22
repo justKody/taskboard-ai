@@ -51,6 +51,7 @@ external binary run via `make sqlc`.
 .
 ├── .gitignore
 ├── client/                            # React + Vite + TS web app (see client/README.md)
+├── desktop/                           # Wails v2 desktop app wrapping client/ (see desktop/README.md)
 └── server/                            # the Go module lives here
     ├── go.mod / go.sum
     ├── Makefile                       # every project command lives here (build, run, sqlc, migrate*)
